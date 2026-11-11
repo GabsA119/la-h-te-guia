@@ -16,7 +16,11 @@
   a { color:var(--brand); }
   .wrap { max-width:1140px; margin:0 auto; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); }
   :focus-visible { outline:3px solid var(--peach); outline-offset:2px; }
-  header.top { background:var(--card); border-bottom:5px solid var(--teal); }
+  header.top { background:var(--card); border-bottom:5px solid var(--teal); position:sticky; top:0; z-index:35; padding-top:env(safe-area-inset-top,0px); transition:transform .25s ease; }
+  header.top.oculto { transform:translateY(-110%); }
+  .homelink { display:flex; align-items:center; gap:14px; color:inherit; text-decoration:none; min-width:0; }
+  .layout { scroll-margin-top:84px; }
+  .layout[hidden] { display:none; }
   .bar { display:flex; align-items:center; gap:14px; padding-block:12px; }
   .logo { width:52px; height:52px; border-radius:14px; background:var(--teal); color:var(--hero-ink); display:grid; place-items:center; font-weight:800; font-size:1.7rem; flex:none; }
   .logo-img { height:56px; width:auto; display:none; background:var(--brand); border-radius:14px; padding:5px; }
@@ -89,7 +93,7 @@
   }
 
   /* Simulador */
-  .promo { margin-top:12px; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; background:var(--soft); border:1px solid var(--border); border-radius:12px; padding:12px 16px; }
+  .promo { margin-top:24px; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; background:var(--soft); border:1px solid var(--border); border-radius:12px; padding:12px 16px; }
   .promo span { flex:1 1 260px; }
   .sim { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:clamp(18px,3vw,30px); }
   .sim h1 { margin:4px 0 6px; font-size:1.35rem; line-height:1.25; }
@@ -172,6 +176,15 @@
   .tag { display:inline-block; font-size:.72rem; font-weight:700; padding:1px 8px; border-radius:999px; background:var(--soft); color:var(--brand); white-space:nowrap; }
   .tag.sec { background:var(--note-bg); color:var(--note-ink); }
   .deps .sep { border-top:1px solid var(--border); margin:6px 0; }
+  .deps .label { font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); padding:10px 12px 4px; }
+  .deps .acc .chev { transition:transform .2s; display:inline-block; margin-left:6px; opacity:.7; }
+  .deps .acc[aria-expanded="true"] .chev { transform:rotate(180deg); }
+  .deps ul.sub { list-style:none; margin:2px 0 8px 14px; padding:0 0 0 8px; border-left:2px solid var(--teal); display:flex; flex-direction:column; gap:1px; }
+  .deps ul.sub button { font-size:.88rem; padding:6px 10px; line-height:1.3; }
+  .deps ul.sub .todos { color:var(--brand); font-weight:600; }
+  .drawer-search { padding:10px 14px 4px; }
+  .drawer-search input { width:100%; font:inherit; padding:9px 14px; border:1px solid var(--border); border-radius:999px; background:var(--bg); color:var(--ink); }
+  .deps .vacio { padding:12px; color:var(--muted); font-size:.9rem; }
   @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .drawer, .overlay { transition:none; } }
 </style>
 <style>:root{color-scheme:light}body{margin:0}</style>
@@ -179,10 +192,12 @@
 <body>
 
 <header class="top"><div class="wrap bar">
-  <img class="logo-img" id="logoImg" src="logo.png" alt="" onload="this.style.display='block';document.getElementById('mark').style.display='none'">
-  <div class="logo" id="mark" aria-hidden="true">H</div>
-  <div class="brand"><small>H. Ayuntamiento de Hermosillo</small><strong>LA H TE GUÍA</strong></div>
-  <button class="burger" id="menuBtn" type="button" aria-label="Abrir menú de dependencias" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
+  <a class="homelink" id="homeLink" href="#" aria-label="La H Te Guía, ir al inicio">
+    <img class="logo-img" id="logoImg" src="logo.png" alt="" onload="this.style.display='block';document.getElementById('mark').style.display='none'">
+    <div class="logo" id="mark" aria-hidden="true">H</div>
+    <div class="brand"><small>H. Ayuntamiento de Hermosillo</small><strong>LA H TE GUÍA</strong></div>
+  </a>
+  <button class="burger" id="menuBtn" type="button" aria-label="Abrir el menú" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
 </div></header>
 <section class="hero"><div class="wrap">
   <h1>Te decimos qué necesitas, dónde ir y cómo hacerlo</h1>
@@ -193,13 +208,13 @@
   </form>
 </div></section>
 <div class="wrap">
-  <div class="note"><b>Antes de empezar:</b> para iniciar un trámite en HDigital necesitas tu Cuenta Única del Municipio de Hermosillo. <a href="https://www.hermosillo.gob.mx/servicios/?s=1" target="_blank" rel="noopener">Crear mi cuenta</a></div>
   <div class="promo"><span><b>Nuevo: simulador.</b> Practica paso a paso cómo se solicita un <b>Permiso para eventos</b> (Inspección y Vigilancia) antes de hacerlo en HDigital.</span><button class="btn" type="button" id="simStart">Probar el simulador</button></div>
 </div>
 <div class="overlay" id="overlay"></div>
-<aside class="drawer" id="drawer" aria-label="Dependencias" inert>
-  <div class="drawer-head"><h2>Dependencias</h2><button class="drawer-close" id="menuClose" type="button" aria-label="Cerrar menú">×</button></div>
-  <nav aria-label="Dependencias"><ul class="deps" id="deps"></ul></nav>
+<aside class="drawer" id="drawer" aria-label="Menú" inert>
+  <div class="drawer-head"><h2>Menú</h2><button class="drawer-close" id="menuClose" type="button" aria-label="Cerrar menú">×</button></div>
+  <div class="drawer-search"><input id="menuQ" type="search" placeholder="Buscar un trámite o tema…" aria-label="Buscar en el menú" autocomplete="off"></div>
+  <nav aria-label="Menú principal"><ul class="deps" id="deps"></ul></nav>
 </aside>
 <button class="chatbtn" id="chatBtn" type="button" aria-expanded="false" aria-controls="chat">💬 Asistente</button>
 <section class="chat" id="chat" role="dialog" aria-label="Asistente de La H Te Guía" aria-modal="false">
@@ -230,13 +245,14 @@ const drawer = document.getElementById('drawer'), overlay = document.getElementB
 function setMenu(open) {
   drawer.classList.toggle('open', open); overlay.classList.toggle('open', open); drawer.inert = !open;
   document.body.classList.toggle('menu-open', open); menuBtn.setAttribute('aria-expanded', open);
-  menuBtn.setAttribute('aria-label', open ? 'Cerrar menú de dependencias' : 'Abrir menú de dependencias');
+  menuBtn.setAttribute('aria-label', open ? 'Cerrar el menú' : 'Abrir el menú');
+  if (!open && menuFiltro) { menuFiltro = ''; document.getElementById('menuQ').value = ''; renderSidebar(); }
   (open ? document.getElementById('menuClose') : menuBtn).focus({ preventScroll: true });
 }
 menuBtn.onclick = () => setMenu(!drawer.classList.contains('open'));
 document.getElementById('menuClose').onclick = overlay.onclick = () => setMenu(false);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) setMenu(false); });
-let dep = null, query = '', ids = null, current = null, sim = null, pv = false, pt = false, gv = false, gvFocus = null, ptFocus = null, pfInit = '';
+let dep = null, query = '', ids = null, current = null, sim = null, pv = false, pt = false, gv = false, gvFocus = null, ptFocus = null, pfInit = '', inicio = true, openDep = null, openPortales = false, menuFiltro = '';
 
 /* Búsqueda: sin acentos, raíz simple, más peso al nombre del trámite y su dependencia. */
 const STOP = new Set('de la el los las un una unos unas y o en a que para por con del al mi me se es lo como quiero necesito puedo hacer tramite donde cuanto cuesta debo tengo hola favor ayuda hermosillo'.split(' '));
@@ -256,15 +272,56 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const linkify = s => esc(s).replace(/https?:\/\/[^\s)]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
 const depNames = [...new Set(ALL.map(t => t.dependencia_corta))].sort((a,b) => a.localeCompare(b,'es'));
 
-function renderSidebar() {
-  const active = (pv || pt || gv) ? '__vista__' : sim ? 'Inspección y Vigilancia' : current ? current.dependencia_corta : dep;
-  const row = (label, n, on, val) => `<li><button type="button" data-dep="${esc(val)}" aria-current="${on}">${esc(label)} <span class="n">${n}</span></button></li>`;
-  depsEl.innerHTML = `<li><button type="button" data-precios aria-current="${pv}">💲 Tabla de precios <span class="n">${PRECIOS.length}</span></button></li><li><button type="button" data-portales aria-current="${pt}">🌐 Portales del Ayuntamiento <span class="n">${PORTALES.length}</span></button></li><li class="sep" aria-hidden="true"></li>` + row('Todas', ALL.length, !active, '') + depNames.map(d => row(d, ALL.filter(t => t.dependencia_corta === d).length, d === active, d)).join('');
-  depsEl.querySelectorAll('button[data-dep]').forEach(b => b.onclick = () => { setMenu(false); go(b.dataset.dep || null); });
-  depsEl.querySelector('[data-portales]').onclick = () => { setMenu(false); pt = true; gv = false; pv = false; sim = null; current = null; ptFocus = null; render(); document.querySelector('.layout').scrollIntoView(); };
-  depsEl.querySelector('[data-precios]').onclick = () => { setMenu(false); pv = true; pt = false; gv = false; sim = null; current = null; render(); document.querySelector('.layout').scrollIntoView(); };
+function esInicio() { return inicio && !current && !sim && !pv && !pt; }
+function irInicio() {
+  dep = null; query = ''; ids = null; current = null; sim = null; pv = false; pt = false; gv = false; inicio = true; q.value = '';
+  render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function go(d) { dep = d; current = null; sim = null; pv = false; pt = false; gv = false; query = ''; ids = null; q.value = ''; render(); }
+/* Menú lateral: opciones fijas y dependencias que se despliegan hacia abajo con todos sus trámites */
+function renderSidebar() {
+  const f = norm(menuFiltro).split(/\s+/).filter(Boolean);
+  const ok = txt => f.every(w => norm(txt).includes(w));
+  const actDep = pv || pt ? null : current ? current.dependencia_corta : sim ? 'Inspección y Vigilancia' : (inicio ? null : dep);
+  const item = (label, act, on, n) => `<li><button type="button" data-act="${esc(act)}" aria-current="${on}">${label}${n !== undefined ? ` <span class="n">${n}</span>` : ''}</button></li>`;
+  const H = [];
+  if (!f.length || ok('inicio')) H.push(item('🏠 Inicio', 'inicio', esInicio()));
+  if (!f.length || ok('tabla de precios costos tarifas')) H.push(item('💲 Tabla de precios', 'precios', pv, PRECIOS.length));
+  const ps = PORTALES.filter(p => !f.length || ok(p.nombre + ' portales ayuntamiento'));
+  if (ps.length) {
+    const abierto = f.length ? true : openPortales;
+    H.push(`<li><button type="button" class="acc" data-act="portales" aria-expanded="${abierto}" aria-current="${pt}">🌐 Portales del Ayuntamiento <span class="n">${ps.length}</span><span class="chev" aria-hidden="true">▾</span></button>` +
+      (abierto ? `<ul class="sub"><li><button type="button" class="todos" data-act="portalesver">Ver todos los portales</button></li>${ps.map(p => `<li><button type="button" data-act="portal:${esc(p.id)}">${esc(p.nombre)}</button></li>`).join('')}</ul>` : '') + '</li>');
+  }
+  H.push('<li class="label">Dependencias</li>');
+  let hay = false;
+  depNames.forEach(d => {
+    const todos = ALL.filter(t => t.dependencia_corta === d);
+    const tr = !f.length ? todos : (ok(d) ? todos : todos.filter(t => ok(t.nombre)));
+    if (!tr.length) return;
+    hay = true;
+    const abierto = f.length ? true : openDep === d;
+    H.push(`<li><button type="button" class="acc" data-act="depx:${esc(d)}" aria-expanded="${abierto}" aria-current="${d === actDep}">${esc(d)} <span class="n">${tr.length}</span><span class="chev" aria-hidden="true">▾</span></button>` +
+      (abierto ? `<ul class="sub"><li><button type="button" class="todos" data-act="dep:${esc(d)}">Ver todos los trámites de ${esc(d)}</button></li>${tr.map(t => `<li><button type="button" data-act="tr:${esc(t.id)}">${esc(t.nombre)}</button></li>`).join('')}</ul>` : '') + '</li>');
+  });
+  if (f.length && !hay && !ps.length) H.push('<li class="vacio">No hay coincidencias en el menú. Prueba con otra palabra.</li>');
+  depsEl.innerHTML = H.join('');
+}
+depsEl.addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const [act, ...r] = b.dataset.act.split(':'), arg = r.join(':');
+  const ir = () => document.querySelector('.layout').scrollIntoView();
+  if (act === 'inicio') { setMenu(false); irInicio(); }
+  else if (act === 'precios') { setMenu(false); pv = true; pt = false; gv = false; inicio = false; sim = null; current = null; render(); ir(); }
+  else if (act === 'portales') { openPortales = !openPortales; renderSidebar(); }
+  else if (act === 'portalesver') { setMenu(false); pt = true; pv = false; gv = false; inicio = false; sim = null; current = null; ptFocus = null; render(); ir(); }
+  else if (act === 'portal') { setMenu(false); pt = true; pv = false; gv = false; inicio = false; sim = null; current = null; ptFocus = arg; render(); }
+  else if (act === 'depx') { openDep = openDep === arg ? null : arg; renderSidebar(); }
+  else if (act === 'dep') { setMenu(false); go(arg); ir(); }
+  else if (act === 'tr') { setMenu(false); current = ALL.find(t => t.id === arg); sim = null; pv = false; pt = false; gv = false; inicio = false; render(); ir(); }
+});
+document.getElementById('menuQ').addEventListener('input', e => { menuFiltro = e.target.value; renderSidebar(); });
+document.getElementById('homeLink').addEventListener('click', e => { e.preventDefault(); irInicio(); });
+function go(d) { dep = d; current = null; sim = null; pv = false; pt = false; gv = false; inicio = false; query = ''; ids = null; q.value = ''; render(); }
 
 function renderList() {
   const list = ALL.filter(t => (!dep || t.dependencia_corta === dep) && (!ids || ids.includes(t.id)))
@@ -315,7 +372,7 @@ const MODALIDADES = [
   'Publicidad',
   'Anuencia municipal para carrera de caballos o pelea de gallos'];
 const SIM_STEPS = ['Cuenta', 'Modalidad', 'Evento', 'Documentos', 'Revisión'];
-function startSim() { pv = false; pt = false; gv = false; sim = { step: 0, mod: null, ev: {}, files: [], folio: null, errors: {} }; current = null; render(); document.querySelector('.layout').scrollIntoView(); }
+function startSim() { pv = false; pt = false; gv = false; inicio = false; sim = { step: 0, mod: null, ev: {}, files: [], folio: null, errors: {} }; current = null; render(); document.querySelector('.layout').scrollIntoView(); }
 document.getElementById('simStart').onclick = startSim;
 
 /* ---- Costo y documentos al final de la simulación ----
@@ -661,10 +718,10 @@ function setChat(open) {
 function burbuja(quien, texto) { const d = document.createElement('div'); d.className = 'bub ' + quien; d.textContent = texto; chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight; return d; }
 function ejecutar(a) {
   if (innerWidth < 720) setChat(false);
-  if (a.tipo === 'tramite') { current = ALL.find(t => t.id === a.arg); sim = null; pv = false; pt = false; gv = false; render(); document.querySelector('.layout').scrollIntoView(); }
+  if (a.tipo === 'tramite') { current = ALL.find(t => t.id === a.arg); sim = null; pv = false; pt = false; gv = false; inicio = false; render(); document.querySelector('.layout').scrollIntoView(); }
   else if (a.tipo === 'dep') go(a.arg);
-  else if (a.tipo === 'portal') { pt = true; gv = false; pv = false; sim = null; current = null; ptFocus = a.arg; render(); }
-  else if (a.tipo === 'precios') { pfInit = a.arg || ''; pv = true; pt = false; gv = false; sim = null; current = null; render(); document.querySelector('.layout').scrollIntoView(); }
+  else if (a.tipo === 'portal') { pt = true; gv = false; inicio = false; pv = false; sim = null; current = null; ptFocus = a.arg; render(); }
+  else if (a.tipo === 'precios') { pfInit = a.arg || ''; pv = true; pt = false; gv = false; inicio = false; sim = null; current = null; render(); document.querySelector('.layout').scrollIntoView(); }
   else if (a.tipo === 'sim') startSim();
   else if (a.tipo === 'menu') setMenu(true);
 }
@@ -706,9 +763,23 @@ function renderPortales() {
   if (ptFocus) { const el = document.getElementById('portal-' + ptFocus); if (el) el.scrollIntoView({ block: 'center' }); ptFocus = null; }
 }
 
-function render() { renderSidebar(); pt ? renderPortales() : pv ? renderPrecios() : sim ? renderSim() : current ? renderDetail(current) : renderList(); }
+function render() {
+  renderSidebar();
+  const layout = document.querySelector('.layout');
+  if (esInicio()) { main.innerHTML = ''; layout.hidden = true; return; }
+  layout.hidden = false;
+  pt ? renderPortales() : pv ? renderPrecios() : sim ? renderSim() : current ? renderDetail(current) : renderList();
+}
+const topbar = document.querySelector('header.top'); let lastY = window.scrollY;
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  if (document.body.classList.contains('menu-open')) { lastY = y; return; }
+  if (y > lastY + 4 && y > 90) topbar.classList.add('oculto');
+  else if (y < lastY - 4 || y <= 10) topbar.classList.remove('oculto');
+  lastY = y;
+}, { passive: true });
 document.getElementById('searchForm').addEventListener('submit', e => {
-  e.preventDefault(); query = q.value.trim(); dep = null; current = null; sim = null; pv = false; pt = false; gv = false; ids = query ? search(query) : null; render();
+  e.preventDefault(); query = q.value.trim(); dep = null; current = null; sim = null; pv = false; pt = false; gv = false; inicio = false; ids = query ? search(query) : null; render();
 });
 render();
 </script>
