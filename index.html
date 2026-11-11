@@ -152,6 +152,25 @@
   .chat-form button { border:0; border-radius:999px; background:var(--brand); color:#fff; font:inherit; font-weight:600; padding:0 16px; cursor:pointer; }
   .chat-note { font-size:.74rem; color:var(--muted); padding:0 14px 8px; }
   body.menu-open .chatbtn { display:none; }
+  .chat-head { flex:none; } .chat-note, .chat-form { flex:none; }
+  .chat-head button { flex:none; }
+  .chat-log { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  .chat-form input { font-size:16px; }   /* 16px evita que iOS acerque la pantalla al escribir */
+  @media (max-width:720px) {
+    .chat { left:0; right:0; top:0; bottom:auto; width:100%; height:100dvh; max-height:none; border:0; border-radius:0; box-shadow:none; }
+    .chat-head { padding:calc(12px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) 12px calc(14px + env(safe-area-inset-left,0px)); }
+    .chat-head strong { font-size:1.05rem; }
+    .chat-head button { width:44px; height:44px; font-size:1.8rem; }
+    .chat-log { padding:14px calc(14px + env(safe-area-inset-right,0px)) 14px calc(14px + env(safe-area-inset-left,0px)); }
+    .bub { max-width:92%; font-size:1rem; }
+    .chat-note { padding:6px 16px; }
+    .chat.teclado .chat-note { display:none; }                 /* con el teclado abierto se prioriza el espacio de la conversación */
+    .chat-form { padding:10px calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px)); background:var(--card); }
+    .chat.teclado .chat-form { padding-bottom:10px; }
+    .chat-form input { padding:12px 16px; }
+    .chat-form button { padding:0 20px; min-height:46px; }
+    body.chat-abierto { overflow:hidden; }
+  }
   /* Portales */
   .pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr)); gap:14px; }
   .pcard { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:8px; scroll-margin-top:12px; }
@@ -714,9 +733,23 @@ function respuesta(entrada) {
 }
 
 const chatEl = document.getElementById('chat'), chatLog = document.getElementById('chatLog'), chatIn = document.getElementById('chatIn'), chatBtn = document.getElementById('chatBtn');
+/* En celular el chat ocupa la pantalla; con el teclado abierto se ajusta al área visible */
+function ajustarChat(alto, arriba) {
+  const movil = window.innerWidth <= 720;
+  if (!movil || !chatEl.classList.contains('open')) { chatEl.style.height = ''; chatEl.style.top = ''; chatEl.classList.remove('teclado'); return; }
+  const vv = window.visualViewport;
+  const h = alto ?? (vv ? vv.height : window.innerHeight), t = arriba ?? (vv ? vv.offsetTop : 0);
+  chatEl.style.height = h + 'px'; chatEl.style.top = t + 'px';
+  chatEl.classList.toggle('teclado', window.innerHeight - h > 120);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', () => ajustarChat()); visualViewport.addEventListener('scroll', () => ajustarChat()); }
+window.addEventListener('resize', () => ajustarChat());
 function setChat(open) {
   chatEl.classList.toggle('open', open); chatBtn.style.display = open ? 'none' : ''; chatBtn.setAttribute('aria-expanded', open);
-  if (open) { if (!chatLog.children.length) bienvenida(); chatIn.focus({ preventScroll: true }); } else chatBtn.focus({ preventScroll: true });
+  document.body.classList.toggle('chat-abierto', open && window.innerWidth <= 720);
+  ajustarChat();
+  if (open) { if (!chatLog.children.length) bienvenida(); if (window.innerWidth > 720) chatIn.focus({ preventScroll: true }); } else chatBtn.focus({ preventScroll: true });
 }
 function burbuja(quien, texto) { const d = document.createElement('div'); d.className = 'bub ' + quien; d.textContent = texto; chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight; return d; }
 function ejecutar(a) {
