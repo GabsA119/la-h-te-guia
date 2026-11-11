@@ -54,10 +54,13 @@
   .drawer nav { overflow-y:auto; padding:10px 12px 24px; flex:1; }
   body.menu-open { overflow:hidden; }
   .deps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
-  .deps button { width:100%; display:flex; justify-content:space-between; gap:8px; text-align:left; padding:8px 12px; border:0; border-radius:10px; background:none; color:var(--ink); font:inherit; font-size:.95rem; cursor:pointer; }
+  .deps button { width:100%; display:flex; align-items:center; gap:10px; text-align:left; padding:9px 12px; border:0; border-radius:10px; background:none; color:var(--ink); font:inherit; font-size:.95rem; cursor:pointer; }
+  .deps .lbl { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
   .deps button:hover { background:var(--soft); }
   .deps button[aria-current="true"] { background:var(--brand); color:#fff; }
-  .deps .n { opacity:.75; font-size:.82rem; }
+  .deps .n { flex:none; min-width:34px; text-align:center; padding:1px 8px; border-radius:999px; background:var(--soft); color:var(--brand); font-size:.8rem; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.5; }
+  .deps button[aria-current="true"] .n { background:rgba(255,255,255,.25); color:#fff; }
+  .deps .chev { flex:none; width:18px; text-align:center; font-size:.85rem; opacity:.7; }
   .count { color:var(--muted); margin:0 0 12px; font-size:.95rem; }
   .linkbtn { background:none; border:0; padding:0; color:var(--brand); font:inherit; text-decoration:underline; cursor:pointer; }
   .list { display:flex; flex-direction:column; gap:12px; }
@@ -177,7 +180,7 @@
   .tag.sec { background:var(--note-bg); color:var(--note-ink); }
   .deps .sep { border-top:1px solid var(--border); margin:6px 0; }
   .deps .label { font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); padding:10px 12px 4px; }
-  .deps .acc .chev { transition:transform .2s; display:inline-block; margin-left:6px; opacity:.7; }
+  .deps .acc .chev { transition:transform .2s; display:inline-block; }
   .deps .acc[aria-expanded="true"] .chev { transform:rotate(180deg); }
   .deps ul.sub { list-style:none; margin:2px 0 8px 14px; padding:0 0 0 8px; border-left:2px solid var(--teal); display:flex; flex-direction:column; gap:1px; }
   .deps ul.sub button { font-size:.88rem; padding:6px 10px; line-height:1.3; }
@@ -282,14 +285,14 @@ function renderSidebar() {
   const f = norm(menuFiltro).split(/\s+/).filter(Boolean);
   const ok = txt => f.every(w => norm(txt).includes(w));
   const actDep = pv || pt ? null : current ? current.dependencia_corta : sim ? 'Inspección y Vigilancia' : (inicio ? null : dep);
-  const item = (label, act, on, n) => `<li><button type="button" data-act="${esc(act)}" aria-current="${on}">${label}${n !== undefined ? ` <span class="n">${n}</span>` : ''}</button></li>`;
+  const item = (label, act, on, n) => `<li><button type="button" data-act="${esc(act)}" aria-current="${on}"><span class="lbl">${label}</span>${n !== undefined ? `<span class="n">${n}</span>` : ''}<span class="chev" aria-hidden="true"></span></button></li>`;
   const H = [];
   if (!f.length || ok('inicio')) H.push(item('🏠 Inicio', 'inicio', esInicio()));
   if (!f.length || ok('tabla de precios costos tarifas')) H.push(item('💲 Tabla de precios', 'precios', pv, PRECIOS.length));
   const ps = PORTALES.filter(p => !f.length || ok(p.nombre + ' portales ayuntamiento'));
   if (ps.length) {
     const abierto = f.length ? true : openPortales;
-    H.push(`<li><button type="button" class="acc" data-act="portales" aria-expanded="${abierto}" aria-current="${pt}">🌐 Portales del Ayuntamiento <span class="n">${ps.length}</span><span class="chev" aria-hidden="true">▾</span></button>` +
+    H.push(`<li><button type="button" class="acc" data-act="portales" aria-expanded="${abierto}" aria-current="${pt}"><span class="lbl">🌐 Portales del Ayuntamiento</span><span class="n">${ps.length}</span><span class="chev" aria-hidden="true">▾</span></button>` +
       (abierto ? `<ul class="sub"><li><button type="button" class="todos" data-act="portalesver">Ver todos los portales</button></li>${ps.map(p => `<li><button type="button" data-act="portal:${esc(p.id)}">${esc(p.nombre)}</button></li>`).join('')}</ul>` : '') + '</li>');
   }
   H.push('<li class="label">Dependencias</li>');
@@ -300,7 +303,7 @@ function renderSidebar() {
     if (!tr.length) return;
     hay = true;
     const abierto = f.length ? true : openDep === d;
-    H.push(`<li><button type="button" class="acc" data-act="depx:${esc(d)}" aria-expanded="${abierto}" aria-current="${d === actDep}">${esc(d)} <span class="n">${tr.length}</span><span class="chev" aria-hidden="true">▾</span></button>` +
+    H.push(`<li><button type="button" class="acc" data-act="depx:${esc(d)}" aria-expanded="${abierto}" aria-current="${d === actDep}"><span class="lbl">${esc(d)}</span><span class="n">${tr.length}</span><span class="chev" aria-hidden="true">▾</span></button>` +
       (abierto ? `<ul class="sub"><li><button type="button" class="todos" data-act="dep:${esc(d)}">Ver todos los trámites de ${esc(d)}</button></li>${tr.map(t => `<li><button type="button" data-act="tr:${esc(t.id)}">${esc(t.nombre)}</button></li>`).join('')}</ul>` : '') + '</li>');
   });
   if (f.length && !hay && !ps.length) H.push('<li class="vacio">No hay coincidencias en el menú. Prueba con otra palabra.</li>');
